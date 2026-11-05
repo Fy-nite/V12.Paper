@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>V12.Paper</AssemblyName>
+    <RootNamespace>V12.Paper</RootNamespace>
+    <PackageId>Finite.V12.Paper</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Charlie-san; Finite</Authors>
+    <Description>Finite's V12 Paper, Origami and Quill UI renderer</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Prowl.Origami" Version="3.9.3" />
+    <PackageReference Include="Prowl.Paper" Version="3.9.3" />
+    <PackageReference Include="Prowl.Quill" Version="3.9.3" />
+    <PackageReference Include="MongoDB.Bson" Version="2.25.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(V12EngineProject)" />
+  </ItemGroup>
+
+</Project>
