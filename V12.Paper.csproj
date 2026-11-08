@@ -25,4 +25,8 @@
     <ProjectReference Include="$(V12EngineProject)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Shaders\*.v12shader" />
+  </ItemGroup>
+
 </Project>

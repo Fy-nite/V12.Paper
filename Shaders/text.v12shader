@@ -1,0 +1,94 @@
+{
+    "parameters":  [
+                       {
+                           "kind":  "Vector4",
+                           "name":  "scissorTransform",
+                           "index":  0
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "scissorTranslation",
+                           "index":  1
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "scissorExt",
+                           "index":  2
+                       },
+                       {
+                           "kind":  "Vector4",
+                           "name":  "brushTransform",
+                           "index":  3
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "brushTranslation",
+                           "index":  4
+                       },
+                       {
+                           "kind":  "Int",
+                           "name":  "brushType",
+                           "index":  5
+                       },
+                       {
+                           "kind":  "Vector4",
+                           "name":  "brushColor1",
+                           "index":  6
+                       },
+                       {
+                           "kind":  "Vector4",
+                           "name":  "brushColor2",
+                           "index":  7
+                       },
+                       {
+                           "kind":  "Vector4",
+                           "name":  "brushParams",
+                           "index":  8
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "brushParams2",
+                           "index":  9
+                       },
+                       {
+                           "kind":  "Vector4",
+                           "name":  "textureTransform",
+                           "index":  10
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "textureTranslation",
+                           "index":  11
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "atlasTexelSize",
+                           "index":  12
+                       },
+                       {
+                           "kind":  "Float",
+                           "name":  "sdfPxRange",
+                           "index":  13
+                       },
+                       {
+                           "kind":  "Vector2",
+                           "name":  "canvasSize",
+                           "index":  14
+                       }
+                   ],
+    "textures":  [
+                     {
+                         "slot":  0,
+                         "name":  "tex0"
+                     },
+                     {
+                         "slot":  1,
+                         "name":  "fontTex"
+                     }
+                 ],
+    "version":  1,
+    "name":  "text",
+    "backends":  {
+                     "godot_spatial":  "shader_type spatial;\nrender_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, blend_premul_alpha, world_vertex_coords;\n\nuniform vec4 scissorTransform = vec4(1.0, 0.0, 0.0, 1.0);\nuniform vec2 scissorTranslation = vec2(0.0, 0.0);\nuniform vec2 scissorExt = vec2(-1.0, -1.0);\n\nuniform vec4 brushTransform = vec4(1.0, 0.0, 0.0, 1.0);\nuniform vec2 brushTranslation = vec2(0.0, 0.0);\nuniform int brushType = 0;\nuniform vec4 brushColor1 = vec4(1.0);\nuniform vec4 brushColor2 = vec4(1.0);\nuniform vec4 brushParams = vec4(0.0);\nuniform vec2 brushParams2 = vec2(0.0);\n\nuniform vec4 textureTransform = vec4(1.0, 0.0, 0.0, 1.0);\nuniform vec2 textureTranslation = vec2(0.0, 0.0);\n\nuniform vec2 atlasTexelSize = vec2(0.0009765625, 0.0009765625);\nuniform float sdfPxRange = 4.0;\nuniform vec2 canvasSize = vec2(1280.0, 720.0);\n\nuniform sampler2D tex0 : filter_linear, repeat_disable;\nuniform sampler2D fontTex : filter_linear, repeat_disable;\n\nvarying vec2 vFragPos;\nvarying vec2 vFragUV;\nvarying vec4 vFragColor;\n\nvec2 apply_transform(vec4 t, vec2 translation, vec2 p) {\n    return vec2(dot(t.xy, p), dot(t.zw, p)) + translation;\n}\n\nfloat brush_factor(vec2 p) {\n    vec2 q = apply_transform(brushTransform, brushTranslation, p);\n    if (brushType == 1) {\n        vec2 start = brushParams.xy;\n        vec2 line = brushParams.zw - start;\n        float len = length(line);\n        if (len \u003c 0.001) { return 0.0; }\n        return clamp(dot(q - start, line) / (len * len), 0.0, 1.0);\n    }\n    if (brushType == 2) {\n        return clamp(smoothstep(brushParams.z, brushParams.w, length(q - brushParams.xy)), 0.0, 1.0);\n    }\n    if (brushType == 3) {\n        vec2 center = brushParams.xy;\n        vec2 halfSize = brushParams.zw;\n        float radius = brushParams2.x;\n        float feather = brushParams2.y;\n        if (halfSize.x \u003c 0.001 || halfSize.y \u003c 0.001) { return 0.0; }\n        vec2 d = abs(q - center) - (halfSize - vec2(radius));\n        float dist = min(max(d.x, d.y), 0.0) + length(max(d, vec2(0.0))) - radius;\n        return smoothstep(-feather * 0.5, feather * 0.5, dist);\n    }\n    return 0.0;\n}\n\nfloat scissor_mask(vec2 p) {\n    if (scissorExt.x \u003c 0.0 || scissorExt.y \u003c 0.0) { return 1.0; }\n    vec2 smoothEdges = scissorExt - abs(apply_transform(scissorTransform, scissorTranslation, p));\n    return clamp(smoothEdges.x, 0.0, 1.0) * clamp(smoothEdges.y, 0.0, 1.0);\n}\n\nfloat sdf_screen_px_range(vec2 uv) {\n    vec2 unitRange = vec2(sdfPxRange) * atlasTexelSize;\n    vec2 screenTexSize = vec2(1.0) / fwidth(uv);\n    vec2 range = unitRange * screenTexSize;\n    return max(min(range.x, range.y), 1.0);\n}\n\nvoid vertex() {\n    vFragPos = vec2(VERTEX.x + canvasSize.x * 0.5, canvasSize.y * 0.5 - VERTEX.y);\n    vFragUV = UV;\n    vFragColor = COLOR;\n}\n\nvoid fragment() {\n    float mask = scissor_mask(vFragPos);\n\n    vec4 color = vFragColor;\n    if (brushType \u003e 0) {\n        color = mix(brushColor1, brushColor2, vec4(brush_factor(vFragPos)));\n    }\n\n    vec4 outColor;\n\n    if (vFragUV.x \u003e= 2.0) {\n        vec2 uv = vFragUV - vec2(2.0);\n        float sd = texture(fontTex, uv).r;\n        float screenPxDistance = sdf_screen_px_range(uv) * (sd - 0.5);\n        float coverage = clamp(screenPxDistance + 0.5, 0.0, 1.0);\n        outColor = color * coverage * mask;\n    } else {\n        float edgeAlpha = clamp(vFragUV.x, 0.0, 1.0);\n        vec4 fill = color * texture(tex0, apply_transform(textureTransform, textureTranslation, vFragPos));\n        outColor = fill * edgeAlpha * mask;\n    }\n\n    ALBEDO = outColor.rgb;\n    ALPHA = outColor.a;\n}\n"
+                 }
+}
