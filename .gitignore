@@ -5,3 +5,6 @@ obj/
 .vs/
 .idea/
 artifacts/
+
+# Reserved DOS device names created by `> nul` in a non-cmd shell.
+nul
