@@ -31,9 +31,12 @@ public sealed class PaperInputHandler : IInputHandler
 
         switch (evt.Type)
         {
+            // Consumption is decided from this Paper instance's own state, not
+            // the shared capture flags: a world-canvas UI can own the pointer in
+            // the same frame without the screen layer swallowing its events.
             case InputEventType.PointerMove:
                 _paper.SetPointerState(PMouse.Unknown, evt.Pointer.X, evt.Pointer.Y, false, true);
-                if (_input.UiCapturesPointer)
+                if (_paper.WantsCapturePointer)
                     evt.Handled = true;
                 break;
 
@@ -45,7 +48,7 @@ public sealed class PaperInputHandler : IInputHandler
                     var paperKey = MapKey(key);
                     if (paperKey != PKey.Unknown)
                         _paper.SetKeyState(paperKey, down);
-                    if (_input.UiCapturesKeyboard)
+                    if (_paper.WantsCaptureKeyboard || _paper.FocusedElementId != 0)
                         evt.Handled = true;
                 }
                 else
@@ -53,7 +56,7 @@ public sealed class PaperInputHandler : IInputHandler
                     var button = MapButton(evt.Button);
                     if (button != PMouse.Unknown)
                         _paper.SetPointerState(button, evt.Pointer.X, evt.Pointer.Y, down, false);
-                    if (_input.UiCapturesPointer)
+                    if (_paper.WantsCapturePointer)
                         evt.Handled = true;
                 }
                 break;
@@ -62,7 +65,7 @@ public sealed class PaperInputHandler : IInputHandler
                 if (string.Equals(evt.Name, "ui_wheel", StringComparison.OrdinalIgnoreCase))
                 {
                     _paper.SetPointerWheel(evt.Value);
-                    if (_input.UiCapturesPointer)
+                    if (_paper.WantsCapturePointer)
                         evt.Handled = true;
                 }
                 break;
@@ -72,7 +75,7 @@ public sealed class PaperInputHandler : IInputHandler
                 if (evt.Character != '\0')
                 {
                     _paper.AddInputCharacter(evt.Character.ToString());
-                    if (_input.UiCapturesKeyboard)
+                    if (_paper.WantsCaptureKeyboard || _paper.FocusedElementId != 0)
                         evt.Handled = true;
                 }
                 break;
