@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, blend_premul_alpha, world_vertex_coords;
+render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, blend_premul_alpha;
 
 uniform vec4 scissorTransform = vec4(1.0, 0.0, 0.0, 1.0);
 uniform vec2 scissorTranslation = vec2(0.0, 0.0);

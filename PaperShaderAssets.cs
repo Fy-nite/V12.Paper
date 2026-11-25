@@ -15,6 +15,16 @@ public static class PaperShaderAssets
     public const string PaperUri = "shader://v12.paper/paper";
     public const string TextUri = "shader://v12.paper/text";
 
+    /// <summary>World-canvas variants. They recover canvas pixels from world
+    /// space through the model matrix; the screen variants can use the raw
+    /// model-space pixel vertices because their view is orthographic.</summary>
+    public const string WorldPaperUri = "shader://v12.paper/world";
+    public const string WorldTextUri = "shader://v12.paper/world-text";
+
+    /// <summary>Solid/text world shader for small HUD panels. It keeps the font
+    /// SDF but skips brush and scissor masks.</summary>
+    public const string WorldFlatUri = "shader://v12.paper/world-flat";
+
     private static readonly object Gate = new();
     private static bool _registered;
 
@@ -33,6 +43,9 @@ public static class PaperShaderAssets
 
             Register(PaperUri, "V12.Paper.Shaders.paper.v12shader");
             Register(TextUri, "V12.Paper.Shaders.text.v12shader");
+            Register(WorldPaperUri, "V12.Paper.Shaders.paper_world.v12shader");
+            Register(WorldTextUri, "V12.Paper.Shaders.text_world.v12shader");
+            Register(WorldFlatUri, "V12.Paper.Shaders.world_flat.v12shader");
             _registered = true;
         }
     }
