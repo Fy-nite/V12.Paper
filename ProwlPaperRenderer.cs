@@ -263,8 +263,11 @@ namespace V12.Core.UI.Paper
                     continue;
                 // The engine path treats a canvas as a grouping node: the dock/UI
                 // widget inside draws itself. A hosted chrome row needs the canvas
-                // box itself so the anchor/content sizing applies.
-                if (AutoSizeScreenCanvas && root.Kind == UIWidgetKind.Canvas)
+                // box itself so the anchor/content sizing applies. An overlay
+                // canvas always emits its own box, even when the host is using
+                // flow rows for ordinary screen canvases.
+                if (root.Kind == UIWidgetKind.Canvas &&
+                    (AutoSizeScreenCanvas || (root.ScreenSpace && root.Overlay)))
                 {
                     BuildNode(root, byParent, 0);
                     continue;
@@ -324,11 +327,17 @@ namespace V12.Core.UI.Paper
                 case UIWidgetKind.Canvas:
                 {
                     el = _paper.Box(idStr, pid, 0);
+                    // A display-only canvas must not compete for the pointer. An
+                    // overlay canvas is a viewport-sized box, so without this a
+                    // decorative crosshair swallows every click before gameplay
+                    // input handlers see it.
+                    if (!node.Interactive)
+                        el.IsNotInteractable();
                     if (node.ScreenSpace)
                     {
                         _screenCanvasId = node.Id;
                         el.LayoutType(global::Prowl.PaperUI.LayoutType.Column);
-                        if (AutoSizeScreenCanvas)
+                        if (AutoSizeScreenCanvas && !node.Overlay)
                         {
                             // Hosted as a shell row: hug the content's height.
                             el.Width(_paper.Stretch()).Height(_paper.Auto)
@@ -349,6 +358,17 @@ namespace V12.Core.UI.Paper
                                   : node.AnchorY >= 0.99f
                                       ? global::Prowl.PaperUI.LayoutJustification.End
                                       : global::Prowl.PaperUI.LayoutJustification.Center);
+
+                            if (node.Overlay)
+                            {
+                                // Take the box out of the root flow so it cannot
+                                // push other canvases, and put it on Paper's
+                                // overlay layer. Priority breaks ties between
+                                // overlays (crosshair above an overlay HUD).
+                                el.PositionType(global::Prowl.PaperUI.PositionType.SelfDirected)
+                                  .Position(0f, 0f)
+                                  .Layer(global::Prowl.PaperUI.Layer.Overlay + node.Layer);
+                            }
                         }
                     }
                     else
